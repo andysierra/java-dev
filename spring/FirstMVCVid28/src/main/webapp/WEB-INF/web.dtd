@@ -1,0 +1,12 @@
+<!ELEMENT web-app (display-name,distributable,servlet,servlet-mapping)>
+<!ELEMENT display-name (#PCDATA)>
+<!ELEMENT distributable EMPTY>
+<!ELEMENT servlet (servlet-name,servlet-class,init-param,load-on-startup)>
+<!ELEMENT servlet-name (#PCDATA)>
+<!ELEMENT servlet-class (#PCDATA)>
+<!ELEMENT init-param (param-name,param-value)>
+<!ELEMENT param-name (#PCDATA)>
+<!ELEMENT param-value (#PCDATA)>
+<!ELEMENT load-on-startup (#PCDATA)>
+<!ELEMENT servlet-mapping (servlet-name,url-pattern)>
+<!ELEMENT url-pattern (#PCDATA)>

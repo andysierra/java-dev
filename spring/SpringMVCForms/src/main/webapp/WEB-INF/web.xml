@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<web-app>
+	<display-name>SpringMVCForms</display-name>
+	<distributable></distributable>
+
+	<!-- <filter> -->
+	<!-- </filter> -->
+
+	<!-- <filter-mapping> -->
+	<!-- </filter-mapping> -->
+
+	<servlet>
+		<servlet-name>dispatcher</servlet-name>
+		<servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+		<init-param>
+			<param-name>contextConfigLocation</param-name>
+			<param-value>/WEB-INF/applicationConfig.xml</param-value>
+		</init-param>
+		<load-on-startup>1</load-on-startup>
+	</servlet>
+
+	<servlet-mapping>
+		<servlet-name>dispatcher</servlet-name>
+		<url-pattern>/</url-pattern>
+	</servlet-mapping>
+
+	<!-- <taglib> -->
+	<!-- <taglib-uri>/i18ntaglib</taglib-uri> -->
+	<!-- <taglib-location>/WEB-INF/tlds/i18ntaglib.tld -->
+	<!-- </taglib-location> -->
+	<!-- </taglib> -->
+</web-app>

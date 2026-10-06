@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project basedir="." default="all" name="The hello world demo.">
+
+<description>
+
+</description>
+
+    <property name="top_dir"		value="../../.."/>
+    <property name="build_dir"		value="${top_dir}/bld"/>
+    <property name="classes_dir"	value="${build_dir}/classes"/>
+    <property name="lib_dir"            value="${build_dir}/lib"/>
+
+    <path id="run.classpath">
+        <pathelement path="${classes_dir}"/>
+	<pathelement location="${top_dir}/lib/jsapi.jar"/>
+    </path>
+
+
+    <target name="none">
+            <echo>Type 'ant -projecthelp' for possible targets.</echo>
+    </target>
+
+
+    <target name="all"
+            description="Compiles all the tests.">
+	    <javac debug="true"
+	           source="1.4"
+		   deprecation="true"
+		   destdir="${classes_dir}"
+		   classpath="${classes_dir}:${top_dir}/lib/jsapi.jar"
+		   srcdir="."/>
+    </target>
+
+
+    <target name="run"
+	    description="Runs the hello world demo."
+	    depends="all">
+	    <java classname="demo.sphinx.helloworld.HelloWorld"
+	          fork="true"
+		  maxmemory="128m">
+                  <sysproperty key="frontend" value="epFrontEnd"/>
+		  <classpath refid="run.classpath"/>
+		  <arg value="helloworld.config.xml"/>
+	    </java>
+    </target>
+
+</project>

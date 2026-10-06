@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="
+		http://www.springframework.org/schema/beans
+    	http://www.springframework.org/schema/beans/spring-beans.xsd
+    	http://www.springframework.org/schema/context
+    	http://www.springframework.org/schema/context/spring-context.xsd
+    	http://www.springframework.org/schema/mvc
+        http://www.springframework.org/schema/mvc/spring-mvc.xsd
+		http://www.springframework.org/schema/tx 
+		http://www.springframework.org/schema/tx/spring-tx.xsd
+    ">
+
+	<context:component-scan
+		base-package="com.andysierra"></context:component-scan>
+
+	<!-- Pool de conexiones con C3P0 -->
+	<!-- TODO: Verificar si se puede escribir <property name="name">value</property> -->
+	<bean 
+		id="myDataSource"
+		class="com.mchange.v2.c3p0.ComboPooledDataSource"
+		destroy-method="close"
+	>
+		<property name="driverClass" 	value="org.postgresql.Driver"/>
+		<property name="jdbcUrl" 		value="jdbc:postgresql://localhost:5432/pildorascrud"/>
+		<property name="user" 			value="postgres"/>
+		<property name="password" 		value="root"/>
+		<property name="minPoolSize" 	value="5"/>
+		<property name="maxPoolSize" 	value="20"/>
+		<property name="maxIdleTime" 	value="30000"/>
+	</bean>
+
+	<!-- Hibernate SessionFactory Bean -->
+	<bean id="sessionFactory"
+		class="org.springframework.orm.hibernate5.LocalSessionFactoryBean">
+		<property name="dataSource" ref="myDataSource" />
+		<property name="packagesToScan" value="com.andysierra.entity.impl"/>
+		<property name="hibernateProperties">
+		   <props>
+		      <prop key="hibernate.dialect">org.hibernate.dialect.PostgreSQLDialect</prop>
+		      <prop key="hibernate.show_sql">true</prop>
+		      <prop key="hibernate.hbm2ddl.auto">validate</prop>
+		      <prop key="hibernate.temp.use_jdbc_metadata_defaults">false</prop> <!-- postgres only -->
+		   </props>
+		</property>
+   </bean>
+	
+	<!-- Hibernate TransactionManager Bean -->
+	<bean id="miTransactionManager"
+		class="org.springframework.orm.hibernate5.HibernateTransactionManager">
+		<property name="sessionFactory" ref="sessionFactory"/>
+	</bean>
+	
+	<tx:annotation-driven transaction-manager="miTransactionManager"/>
+	
+	<!-- registra los métodos manejadores de requests y las anotaciones 
+		para no tener que declarar sus beans (mucho trabajo) 
+		https://stackoverflow.com/questions/8162459/what-does-mvcannotation-driven-do -->
+	<mvc:annotation-driven/>
+	<mvc:resources location="/resources/" mapping="/resources/**"></mvc:resources>
+	
+	
+	<!-- TEMP: Mientras aprendemos a manejar la configuración de aplicaciones mediante clases -->
+	<mvc:cors>
+		<mvc:mapping
+			path 				= "/API/**"
+			allowed-origins 	= "http://localhost:5173/"
+			allowed-methods 	= "GET, POST"
+			allow-credentials	="false"
+			max-age				= "3000"/>
+	</mvc:cors>
+	
+</beans>

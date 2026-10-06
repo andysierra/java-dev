@@ -1,0 +1,10 @@
+#JSGF V1.0;
+
+/**
+ * Palabras que se tienen que reconocer:
+ */
+
+grammar hello;
+
+public <greet> = (Good morning | Hello ) (Evandro | Daniel | Rita | Mark);
+

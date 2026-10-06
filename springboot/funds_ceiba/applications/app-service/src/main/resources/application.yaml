@@ -1,0 +1,20 @@
+##Spring Configuration
+server:
+  port: 8080
+spring:
+  application:
+    name: ceiba_prueba_tecnica
+  devtools:
+    add-properties: false
+  profiles:
+    include:
+
+adapters:
+  dynamodb:
+    region: ${AWS_REGION:us-east-1}
+    clients-table: ${DYNAMODB_TABLE_CLIENTS:dev-btg-clients}
+    funds-table: ${DYNAMODB_TABLE_FUNDS:dev-btg-funds}
+    transactions-table: ${DYNAMODB_TABLE_TRANSACTIONS:dev-btg-transactions}
+  sns:
+    region: ${AWS_REGION:us-east-1}
+    topic-arn: ${SNS_TOPIC_ARN:arn:aws:sns:us-east-1:247992390076:dev-btg-notifications}

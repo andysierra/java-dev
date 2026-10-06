@@ -1,0 +1,9 @@
+body, html, * {
+	background-color: pink;
+	padding: 0;
+	margin: 0;
+}
+
+h1 {
+	font-family: "Helvetica, sans-serif";
+}

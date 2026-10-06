@@ -1,0 +1,152 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: BTG Pactual - ECS Service (requires Docker image in ECR)
+
+Parameters:
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues: [dev, staging, prod]
+
+  ContainerPort:
+    Type: Number
+    Default: 8080
+
+  ContainerCpu:
+    Type: Number
+    Default: 512
+
+  ContainerMemory:
+    Type: Number
+    Default: 1024
+
+  DesiredCount:
+    Type: Number
+    Default: 1
+
+  ImageTag:
+    Type: String
+    Default: latest
+
+Resources:
+
+  ECSCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: !Sub ${Environment}-btg-cluster
+      ClusterSettings:
+        - Name: containerInsights
+          Value: enabled
+
+  TaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: !Sub ${Environment}-btg-funds-api
+      Cpu: !Ref ContainerCpu
+      Memory: !Ref ContainerMemory
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      ExecutionRoleArn:
+        Fn::ImportValue: !Sub ${Environment}-btg-execution-role-arn
+      TaskRoleArn:
+        Fn::ImportValue: !Sub ${Environment}-btg-task-role-arn
+      ContainerDefinitions:
+        - Name: btg-funds-api
+          Image: !Sub
+            - "${ECRUri}:${ImageTag}"
+            - ECRUri:
+                Fn::ImportValue: !Sub ${Environment}-btg-ecr-uri
+          PortMappings:
+            - ContainerPort: !Ref ContainerPort
+              Protocol: tcp
+          Environment:
+            - Name: SERVER_PORT
+              Value: !Ref ContainerPort
+            - Name: AWS_REGION
+              Value: !Ref AWS::Region
+            - Name: DYNAMODB_TABLE_CLIENTS
+              Value: !Sub ${Environment}-btg-clients
+            - Name: DYNAMODB_TABLE_FUNDS
+              Value: !Sub ${Environment}-btg-funds
+            - Name: DYNAMODB_TABLE_TRANSACTIONS
+              Value: !Sub ${Environment}-btg-transactions
+            - Name: SNS_TOPIC_ARN
+              Value: !Sub ${Environment}-btg-notifications
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group:
+                Fn::ImportValue: !Sub ${Environment}-btg-log-group
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: ecs
+          HealthCheck:
+            Command:
+              - CMD-SHELL
+              - wget --no-verbose --tries=1 --spider http://localhost:8080/actuator/health || exit 1
+            Interval: 30
+            Timeout: 5
+            Retries: 3
+            StartPeriod: 60
+
+  ALB:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: !Sub ${Environment}-btg-alb
+      Scheme: internet-facing
+      Type: application
+      Subnets:
+        - Fn::ImportValue: !Sub ${Environment}-btg-subnet-1
+        - Fn::ImportValue: !Sub ${Environment}-btg-subnet-2
+      SecurityGroups:
+        - Fn::ImportValue: !Sub ${Environment}-btg-alb-sg
+
+  TargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: !Sub ${Environment}-btg-tg
+      Port: !Ref ContainerPort
+      Protocol: HTTP
+      VpcId:
+        Fn::ImportValue: !Sub ${Environment}-btg-vpc-id
+      TargetType: ip
+      HealthCheckPath: /actuator/health
+      HealthCheckIntervalSeconds: 30
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 3
+
+  ALBListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref ALB
+      Port: 80
+      Protocol: HTTP
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref TargetGroup
+
+  ECSService:
+    Type: AWS::ECS::Service
+    DependsOn: ALBListener
+    Properties:
+      ServiceName: !Sub ${Environment}-btg-funds-api
+      Cluster: !Ref ECSCluster
+      TaskDefinition: !Ref TaskDefinition
+      DesiredCount: !Ref DesiredCount
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets:
+            - Fn::ImportValue: !Sub ${Environment}-btg-subnet-1
+            - Fn::ImportValue: !Sub ${Environment}-btg-subnet-2
+          SecurityGroups:
+            - Fn::ImportValue: !Sub ${Environment}-btg-ecs-sg
+      LoadBalancers:
+        - ContainerName: btg-funds-api
+          ContainerPort: !Ref ContainerPort
+          TargetGroupArn: !Ref TargetGroup
+
+Outputs:
+  APIURL:
+    Description: API endpoint URL
+    Value: !Sub http://${ALB.DNSName}
