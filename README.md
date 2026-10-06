@@ -49,7 +49,7 @@ flowchart LR
 ## 📂 Estructura
 
 ```
-development-java/
+java-dev/
 ├── 🌱 spring/                 # Spring Framework "a la antigua" (Java 8, Maven, WAR)
 ├── 🚀 springboot/             # Spring Boot moderno (Java 21, Gradle, WebFlux)
 └── 🎙️ ReconocimientoAudio/    # Reconocimiento de voz con CMU Sphinx
